@@ -22,5 +22,26 @@ export const conversationService = {
     
     if (error) throw error;
     return data as Conversation;
+  },
+
+  async updateConversation(id: string, updates: Partial<Conversation>) {
+    const { data, error } = await supabase
+      .from('conversations')
+      .update(updates)
+      .eq('id', id)
+      .select()
+      .single();
+    
+    if (error) throw error;
+    return data as Conversation;
+  },
+
+  async deleteConversation(id: string) {
+    const { error } = await supabase
+      .from('conversations')
+      .delete()
+      .eq('id', id);
+    
+    if (error) throw error;
   }
 };
