@@ -1,6 +1,8 @@
 import React from 'react';
-import { ArrowUpDown } from 'lucide-react';
+import { ArrowUpDown, Phone, Mail, Circle } from 'lucide-react';
 import { format } from 'date-fns';
+import { SourceTag } from './SourceTag';
+import { getRelativeTime } from '../../utils/timeUtils';
 import type { Lead } from '../../types';
 
 interface LeadTableProps {
@@ -9,6 +11,10 @@ interface LeadTableProps {
 }
 
 export function LeadTable({ leads, onSelectLead }: LeadTableProps) {
+  const handleLeadClick = (lead: Lead) => {
+    onSelectLead(lead);
+  };
+
   return (
     <div className="bg-white rounded-lg shadow overflow-hidden">
       <div className="overflow-x-auto">
@@ -31,7 +37,13 @@ export function LeadTable({ leads, onSelectLead }: LeadTableProps) {
                 Source
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Created
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Next Follow-up
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Actions
               </th>
             </tr>
           </thead>
@@ -39,16 +51,33 @@ export function LeadTable({ leads, onSelectLead }: LeadTableProps) {
             {leads.map((lead) => (
               <tr
                 key={lead.id}
-                onClick={() => onSelectLead(lead)}
-                className="hover:bg-gray-50 cursor-pointer transition-colors"
+                className="hover:bg-gray-50 transition-colors cursor-pointer"
+                onClick={() => handleLeadClick(lead)}
               >
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="flex items-center">
-                    <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-medium">
+                    <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-medium relative">
                       {lead.name.charAt(0)}
+                      {!lead.optin_viewed_at && (
+                        <Circle 
+                          className="absolute -top-1 -right-1 w-3 h-3 fill-blue-600 text-blue-600" 
+                          fill="currentColor"
+                        />
+                      )}
                     </div>
                     <div className="ml-3">
-                      <div className="font-medium text-gray-900">{lead.name}</div>
+                      <div className="font-medium text-gray-900 flex items-center gap-2">
+                        {lead.name}
+                        {!lead.optin_viewed_at && (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                            <Circle className="w-2 h-2 fill-blue-600" fill="currentColor" />
+                            New
+                          </span>
+                        )}
+                      </div>
+                      <div className="text-xs text-gray-500">
+                        Added {getRelativeTime(lead.created_at)}
+                      </div>
                     </div>
                   </div>
                 </td>
@@ -68,11 +97,37 @@ export function LeadTable({ leads, onSelectLead }: LeadTableProps) {
                     {lead.status.charAt(0).toUpperCase() + lead.status.slice(1)}
                   </span>
                 </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <SourceTag 
+                    source={lead.source}
+                    className="bg-gray-100 text-gray-800"
+                  />
+                </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {lead.source}
+                  {format(new Date(lead.created_at), 'MMM d, yyyy')}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                   {format(new Date(lead.next_followup), 'MMM d, yyyy')}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <div className="flex items-center gap-2">
+                    <a
+                      href={`tel:${lead.phone}`}
+                      className="text-gray-400 hover:text-blue-600"
+                      title="Call"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <Phone className="w-4 h-4" />
+                    </a>
+                    <a
+                      href={`mailto:${lead.email}`}
+                      className="text-gray-400 hover:text-purple-600"
+                      title="Email"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <Mail className="w-4 h-4" />
+                    </a>
+                  </div>
                 </td>
               </tr>
             ))}

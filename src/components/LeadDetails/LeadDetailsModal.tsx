@@ -4,35 +4,17 @@ import { EditLeadForm } from './Leads/EditLeadForm';
 import { LeadDetails } from './LeadDetails/LeadDetails';
 import { SourceTag } from './Leads/SourceTag';
 import { Toast } from './Notifications/Toast';
-import { leadService } from '../services/leadService';
 import type { Lead } from '../types';
 
 interface LeadDetailsModalProps {
   lead: Lead;
   onClose: () => void;
-  onUpdate: (lead: Lead) => void;
+  onUpdate: (lead: Lead) => Promise<void>;
 }
 
 export function LeadDetailsModal({ lead, onClose, onUpdate }: LeadDetailsModalProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
-
-  // Mark lead as viewed when modal opens
-  React.useEffect(() => {
-    const markAsViewed = async () => {
-      if (!lead.optin_viewed_at) {
-        try {
-          const updatedLead = await leadService.updateLead(lead.id, {
-            optin_viewed_at: new Date().toISOString()
-          });
-          onUpdate(updatedLead);
-        } catch (error) {
-          console.error('Failed to mark lead as viewed:', error);
-        }
-      }
-    };
-    markAsViewed();
-  }, [lead.id, lead.optin_viewed_at]);
 
   const handleUpdate = async (updatedLead: Lead) => {
     try {

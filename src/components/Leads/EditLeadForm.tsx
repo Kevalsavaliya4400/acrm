@@ -1,25 +1,26 @@
 import React, { useState } from 'react';
-import { PlusCircle } from 'lucide-react';
-import { leadService } from '../services/leadService';
-import { SourceSelect } from './Leads/SourceSelect';
-import { SourceTag } from './Leads/SourceTag';
-import { useLeadSources } from '../hooks/useLeadSources';
-import type { Lead } from '../types';
+import { leadService } from '../../services/leadService';
+import { SourceSelect } from './SourceSelect';
+import { SourceTag } from './SourceTag';
+import { useLeadSources } from '../../hooks/useLeadSources';
+import type { Lead } from '../../types';
 
-interface LeadFormProps {
-  onSuccess?: () => void;
+interface EditLeadFormProps {
+  lead: Lead;
+  onSuccess: (updatedLead: Lead) => void;
 }
 
-export function LeadForm({ onSuccess }: LeadFormProps) {
+export function EditLeadForm({ lead, onSuccess }: EditLeadFormProps) {
   const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    phone: '',
-    source: '',
-    notes: '',
-    property_interest: '',
-    budget: '',
-    location: '',
+    name: lead.name,
+    email: lead.email,
+    phone: lead.phone,
+    source: lead.source,
+    status: lead.status,
+    notes: lead.notes || '',
+    property_interest: lead.property_interest || '',
+    budget: lead.budget?.toString() || '',
+    location: lead.location || '',
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -31,29 +32,14 @@ export function LeadForm({ onSuccess }: LeadFormProps) {
     setError(null);
     
     try {
-      await leadService.createLead({
+      const updatedLead = await leadService.updateLead(lead.id, {
         ...formData,
-        status: 'new',
-        next_followup: new Date().toISOString(),
-        last_contact: new Date().toISOString(),
         budget: formData.budget ? Number(formData.budget) : undefined,
       });
-      
-      setFormData({
-        name: '',
-        email: '',
-        phone: '',
-        source: '',
-        notes: '',
-        property_interest: '',
-        budget: '',
-        location: '',
-      });
-      
-      onSuccess?.();
+      onSuccess(updatedLead);
     } catch (err) {
-      setError('Failed to create lead. Please try again.');
-      console.error('Error creating lead:', err);
+      setError('Failed to update lead. Please try again.');
+      console.error('Error updating lead:', err);
     } finally {
       setIsSubmitting(false);
     }
@@ -117,6 +103,24 @@ export function LeadForm({ onSuccess }: LeadFormProps) {
         </div>
         
         <div>
+          <label className="block text-sm font-medium text-gray-700">Status</label>
+          <select
+            value={formData.status}
+            onChange={(e) => setFormData(prev => ({ ...prev, status: e.target.value as Lead['status'] }))}
+            className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            required
+            disabled={isSubmitting}
+          >
+            <option value="new">New</option>
+            <option value="contacted">Contacted</option>
+            <option value="qualified">Qualified</option>
+            <option value="proposal">Proposal</option>
+            <option value="negotiation">Negotiation</option>
+            <option value="closed">Closed</option>
+          </select>
+        </div>
+        
+        <div>
           <label className="block text-sm font-medium text-gray-700">Source</label>
           <SourceSelect
             value={formData.source}
@@ -171,7 +175,7 @@ export function LeadForm({ onSuccess }: LeadFormProps) {
           disabled={isSubmitting}
           className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {isSubmitting ? 'Adding Lead...' : 'Add Lead'}
+          {isSubmitting ? 'Updating Lead...' : 'Update Lead'}
         </button>
       </div>
     </form>
